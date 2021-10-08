@@ -1,0 +1,16 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+WNBA = pd.read_csv("RWNBA21_Teams.csv", delimiter = ";")
+
+#Summary stats on: Two-points field goals FG% , three-points field goals 3P%
+print(WNBA['FG%'].describe())
+print(WNBA['3P%'].describe())
+
+#Comparison of the distribution of two-point field goal percentage and three-point field goal percentage using a Histogram
+WNBA[['FG%','3P%']].plot.hist(alpha=0.3, bins=15)
+plt.xlabel('Field Goal Percentage')
+plt.ylabel('Frequency')
+plt.title("Distributions of Field Goal Percentages", fontsize=15)
+plt.show()
+
