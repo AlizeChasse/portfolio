@@ -1,0 +1,92 @@
+#create environment for connection to IBM DB2 database
+!pip install ipython-sql
+!easy_install ibm_db
+!pip install ibm_db_sa
+%load_ext sql
+
+import ibm_db
+import ibm_db_dbi
+import sqlalchemy
+
+
+#connecting to fake credentials
+hdbc  = ibm_db.connect(dsn, "", "")
+hdbi = ibm_db_dbi.Connection(hdbc)
+dsn_hostname = "dashdb-txn-sbox-yp-dal09-14.services.dal.bluemix.net" 
+dsn_uid = "abc12345"       
+dsn_pwd = "7dBZ3wWt9XN6$o0J"      
+
+dsn_driver = "{IBM DB2 ODBC DRIVER}"
+dsn_database = "BLUDB"            
+dsn_port = "50000"                
+dsn_protocol = "TCPIP"           
+
+dsn = (
+    "DRIVER={0};"
+    "DATABASE={1};"
+    "HOSTNAME={2};"
+    "PORT={3};"
+    "PROTOCOL={4};"
+    "UID={5};"
+    "PWD={6};").format(dsn_driver, dsn_database, dsn_hostname, dsn_port, dsn_protocol, dsn_uid, dsn_pwd)
+
+#printing the connection string to check correct values are specified
+print(dsn)
+
+
+
+#creating data manipulation environment
+import pandas
+import sqlalchemy
+
+df = pandas.read_sql(sql,hdbi)
+
+#manipulation ex.1
+sql = 'SELECT COUNT(*) FROM BIENS'
+df = pandas.read_sql(sql,hdbi)
+df
+
+#manipulation ex.2
+sql = 'SELECT COUNT(*) FROM BIENS B JOIN MUTATION M ON B."id_bien" = M."id_bien" WHERE "code_type_local"=2'
+df = pandas.read_sql(sql,hdbi)
+df
+
+#manipulation ex.3
+sql = 'SELECT "code_dep", CAST(AVG("val_fonc"/"surface_carrez") AS INTEGER) AS prix_moyen_m2 FROM BIENS B JOIN MUTATION M ON B."id_bien" = M."id_bien" JOIN ADRESSES A ON M."mutation_id" = A."mutation_id" GROUP BY "code_dep" ORDER BY prix_moyen_m2 DESC LIMIT 10 '
+df = pandas.read_sql(sql,hdbi)
+df
+
+#manipulation ex.4
+sql = '''SELECT "code_dep", 
+CAST(AVG("val_fonc"/"surface_carrez") AS INTEGER) AS prix_moyen_m2 
+FROM BIENS B JOIN MUTATION M ON B."id_bien" = M."id_bien" 
+JOIN ADRESSES A ON M."mutation_id" = A."mutation_id" 
+GROUP BY "code_dep" ORDER BY prix_moyen_m2 DESC LIMIT 10 '''
+df = pandas.read_sql(sql,hdbi)
+df
+
+#manipulation ex.5
+sql = '''
+SELECT COUNT("mutation_id") 
+FROM MUTATION 
+WHERE "date_mut" BETWEEN '2020-01-01' AND '2020-03-31' '''
+df1 = pandas.read_sql(sql, hdbi)
+
+sql = '''
+SELECT COUNT("mutation_id") 
+FROM MUTATION 
+WHERE "date_mut" BETWEEN '2020-04-01' AND '2020-06-30' '''
+df2 = pandas.read_sql(sql, hdbi)
+
+result = ((df2 - df1)/ df2) * 100
+result
+
+#manipulation ex.6
+sql = '''
+SELECT SUM("val_fonc") 
+FROM MUTATION 
+WHERE "date_mut" BETWEEN '2020-04-01' AND '2020-06-30' '''
+df4 = pandas.read_sql(sql, hdbi)
+
+result = ((df4 - df3)/ df4) * 100
+result
