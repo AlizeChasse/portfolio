@@ -1,0 +1,96 @@
+#The goal of this notebook was to compare accuracy of models. 
+#In this notebook, the model is KNeighborsClassifier
+
+%matplotlib notebook
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+bank = pd.read_csv("bank-additional-full.csv", sep=";")
+bank = bank.replace('yes', 1)
+bank = bank.replace('no', 0)
+
+#data visualization
+#plotting a scatter matrix
+from pandas.plotting import scatter_matrix
+from matplotlib import cm
+
+X = bank[['duration', 'poutcome', 'emp.var.rate', 'cons.price.idx', 'cons.conf.idx', 'euribor3m', 'nr.employed']]
+y = bank['y']
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+cmap = cm.get_cmap('gnuplot')
+scatter = scatter_matrix(X_train, c= y_train, marker = 'o', s=40, hist_kwds={'bins':15}, figsize=(9,9), cmap=cmap)
+
+#plotting a 3D scatter plot
+from mpl_toolkits.mplot3d import Axes3D
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection = '3d')
+ax.scatter(X_train['duration'], X_train['euribor3m'], X_train['nr.employed'], c = y_train, marker = 'o', s=100)
+ax.set_xlabel('duration')
+ax.set_ylabel('euribor3m')
+ax.set_zlabel('nr.employed')
+plt.show()
+
+#model
+#creating train-test split with refined data
+X = bank[['duration', 'euribor3m', 'nr.employed']]
+y = bank['y']
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+#creating classifier object
+from sklearn.neighbors import KNeighborsClassifier
+knn = KNeighborsClassifier(n_neighbors = 5)
+
+#fitting estimator with training data
+knn.fit(X_train, y_train)
+
+#estimating classifier accuracy
+knn.score(X_test, y_test)
+
+#plotting k parameter accuracy
+k_range = range(1,20)
+scores = []
+
+for k in k_range:
+    knn = KNeighborsClassifier(n_neighbors = k)
+    knn.fit(X_train, y_train)
+    scores.append(knn.score(X_test, y_test))
+
+plt.figure()
+plt.xlabel('k')
+plt.ylabel('accuracy')
+plt.scatter(k_range, scores)
+plt.xticks([0,5,10,15,20]);
+
+#creating refined classifier object 
+from sklearn.neighbors import KNeighborsClassifier
+
+knn = KNeighborsClassifier(n_neighbors = 15)
+
+#fitting estimator with training data
+knn.fit(X_train, y_train)
+
+#estimating refined classifier accuracy
+knn.score(X_test, y_test)
+
+#plotting test-train split accuracy
+t = [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]
+
+knn = KNeighborsClassifier(n_neighbors = 5)
+
+plt.figure()
+
+for s in t:
+
+    scores = []
+    for i in range(1,1000):
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 1-s)
+        knn.fit(X_train, y_train)
+        scores.append(knn.score(X_test, y_test))
+    plt.plot(s, np.mean(scores), 'bo')
+
+plt.xlabel('Training set proportion (%)')
+plt.ylabel('accuracy');
